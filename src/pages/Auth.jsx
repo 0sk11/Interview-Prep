@@ -28,72 +28,172 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#121212] px-4">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-[#1E1E1E] p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            {isLogin ? 'Sign in to Tracker' : 'Create an account'}
-          </h2>
-        </div>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'var(--bg-dark)',
+      padding: '1rem',
+      fontFamily: 'var(--font-main)'
+    }}>
+      <div className="card" style={{
+        width: '100%',
+        maxWidth: '420px',
+        padding: '2.5rem',
+        boxShadow: '10px 10px 0px var(--border-strong)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Accent Bar */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '8px',
+          backgroundColor: 'var(--status-solved)' // Bauhaus Blue
+        }}></div>
+
+        <h2 style={{
+          marginTop: '1rem',
+          marginBottom: '2rem',
+          textAlign: 'center',
+          fontSize: '2rem',
+          fontWeight: 700,
+          color: 'var(--text-main)',
+          textTransform: 'uppercase',
+          letterSpacing: '-1px'
+        }}>
+          {isLogin ? 'Log In' : 'Sign Up'}
+        </h2>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-md text-sm text-center border border-red-200 dark:border-red-800">
+            <div style={{
+              backgroundColor: 'var(--status-editorial)', // Red
+              color: 'white',
+              padding: '0.8rem',
+              border: '2px solid var(--border-strong)',
+              fontWeight: 600,
+              textAlign: 'center',
+              fontSize: '0.9rem'
+            }}>
               {error}
             </div>
           )}
           
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Username
-              </label>
-              <input
-                name="username"
-                type="text"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-white dark:bg-[#2A2A2A]"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Password
-              </label>
-              <input
-                name="password"
-                type="password"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-white dark:bg-[#2A2A2A]"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>
+              Username
+            </label>
+            <input
+              name="username"
+              type="text"
+              required
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.8rem 1rem',
+                border: '2px solid var(--border-strong)',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--text-main)',
+                fontSize: '1rem',
+                fontFamily: 'var(--font-main)',
+                outline: 'none'
+              }}
+              onFocus={(e) => e.target.style.borderColor = 'var(--status-solved)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--border-strong)'}
+            />
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
-            </button>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>
+              Password
+            </label>
+            <input
+              name="password"
+              type="password"
+              required
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.8rem 1rem',
+                border: '2px solid var(--border-strong)',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--text-main)',
+                fontSize: '1rem',
+                fontFamily: 'var(--font-main)',
+                outline: 'none'
+              }}
+              onFocus={(e) => e.target.style.borderColor = 'var(--status-solved)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--border-strong)'}
+            />
           </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary"
+            style={{
+              marginTop: '1rem',
+              width: '100%',
+              padding: '1rem',
+              fontSize: '1.1rem',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              backgroundColor: 'var(--status-solved)',
+              color: 'white',
+              border: '2px solid var(--border-strong)',
+              boxShadow: '4px 4px 0px var(--border-strong)',
+              transition: 'all 0.1s ease',
+              opacity: loading ? 0.7 : 1
+            }}
+            onMouseDown={(e) => {
+              if(!loading) {
+                e.target.style.transform = 'translate(2px, 2px)';
+                e.target.style.boxShadow = '2px 2px 0px var(--border-strong)';
+              }
+            }}
+            onMouseUp={(e) => {
+              if(!loading) {
+                e.target.style.transform = 'translate(0px, 0px)';
+                e.target.style.boxShadow = '4px 4px 0px var(--border-strong)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translate(0px, 0px)';
+              e.target.style.boxShadow = '4px 4px 0px var(--border-strong)';
+            }}
+          >
+            {loading ? 'Processing...' : (isLogin ? 'Enter' : 'Create')}
+          </button>
         </form>
 
-        <div className="text-center">
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <button
             onClick={() => {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontFamily: 'var(--font-main)'
+            }}
+            onMouseEnter={(e) => e.target.style.color = 'var(--text-main)'}
+            onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
           >
-            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
           </button>
         </div>
       </div>
