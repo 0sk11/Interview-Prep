@@ -19,9 +19,12 @@ export default function Layout({ children }) {
     <div className="app-container">
       {/* Mobile Header (only visible on mobile via CSS) */}
       <header className="mobile-header">
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
-          {activeCurriculum.toUpperCase()} Tracker
-        </h1>
+        <div className="flex-center gap-2">
+          <img src="/logo.jpg" alt="Interview Prep 360 Logo" style={{ width: '28px', height: '28px', border: '2px solid var(--border-strong)', borderRadius: '50%' }} />
+          <h1 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
+            Interview Prep 360
+          </h1>
+        </div>
         <button 
           onClick={() => setIsMobileMenuOpen(true)}
           style={{ background: 'none', border: 'none', color: 'var(--text-main)' }}

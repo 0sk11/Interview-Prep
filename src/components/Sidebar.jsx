@@ -15,8 +15,9 @@ export default function Sidebar() {
         >
           <X size={24} />
         </button>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-main)' }}>
-          {activeCurriculum.toUpperCase()} Tracker
+        <h1 className="gradient-text" style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <img src="/logo.jpg" alt="Interview Prep 360 Logo" style={{ width: '32px', height: '32px', border: '2px solid var(--border-strong)', borderRadius: '50%' }} />
+          Interview Prep 360
         </h1>
         <p className="text-xs text-muted mt-2">v2.0 Premium</p>
       </div>
