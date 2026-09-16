@@ -1,0 +1,5 @@
+node_modules
+dist
+.env*
+*_tracker_data.json
+data.xlsx
