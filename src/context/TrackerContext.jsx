@@ -68,7 +68,10 @@ export const TrackerProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     fetch(`${API_BASE}/data/${activeCurriculum}`, { headers: getHeaders() })
       .then(handleAuthError)
