@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, ListTodo, Trophy, BookOpen, Settings, Calendar, Sun, Moon, Pause, Play, RotateCcw, Bot, X } from 'lucide-react';
 import { useTracker } from '../context/TrackerContext';
+import logo from '../assets/logo.jpg';
 
 export default function Sidebar() {
   const { activeCurriculum, switchCurriculum, settings, setSettings, togglePause, resetData, isMobileMenuOpen, setIsMobileMenuOpen } = useTracker();
@@ -16,7 +17,7 @@ export default function Sidebar() {
           <X size={24} />
         </button>
         <h1 className="gradient-text" style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <img src="/logo.jpg" alt="Interview Prep 360 Logo" style={{ width: '32px', height: '32px', border: '2px solid var(--border-strong)', borderRadius: '50%' }} />
+          <img src={logo} alt="Interview Prep 360 Logo" style={{ width: '32px', height: '32px', border: '2px solid var(--border-strong)', borderRadius: '50%', objectFit: 'cover' }} />
           Interview Prep 360
         </h1>
         <p className="text-xs text-muted mt-2">v2.0 Premium</p>

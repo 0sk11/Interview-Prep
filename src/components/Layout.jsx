@@ -4,9 +4,12 @@ import Sidebar from './Sidebar';
 import AiFloatingWidget from './AiFloatingWidget';
 import { useTracker } from '../context/TrackerContext';
 
+import logo from '../assets/logo.jpg';
+
 export default function Layout({ children }) {
   const { settings, isMobileMenuOpen, setIsMobileMenuOpen, activeCurriculum } = useTracker();
 
+  // Handle CSS variable injection based on theme
   useEffect(() => {
     if (settings.theme === 'dark') {
       document.body.classList.add('dark-mode');
@@ -20,7 +23,7 @@ export default function Layout({ children }) {
       {/* Mobile Header (only visible on mobile via CSS) */}
       <header className="mobile-header">
         <div className="flex-center gap-2">
-          <img src="/logo.jpg" alt="Interview Prep 360 Logo" style={{ width: '28px', height: '28px', border: '2px solid var(--border-strong)', borderRadius: '50%' }} />
+          <img src={logo} alt="Interview Prep 360 Logo" style={{ width: '28px', height: '28px', border: '2px solid var(--border-strong)', borderRadius: '50%', objectFit: 'cover' }} />
           <h1 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
             Interview Prep 360
           </h1>
