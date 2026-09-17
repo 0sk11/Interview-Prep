@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { initialProblems, topics } from '../data/initialData';
 import { addDays, differenceInDays } from 'date-fns';
 
@@ -14,6 +14,10 @@ export const TrackerProvider = ({ children }) => {
   const [contestLog, setContestLog] = useState([]);
   const [settings, setSettings] = useState({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const cache = useRef({});
+  const loadedCurriculum = useRef(null);
+
 
   const isAuthenticated = !!token;
 
@@ -61,6 +65,8 @@ export const TrackerProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    cache.current = {};
+    loadedCurriculum.current = null;
     setToken(null);
     setProblems([]);
     setContestLog([]);
@@ -72,13 +78,25 @@ export const TrackerProvider = ({ children }) => {
       setLoading(false);
       return;
     }
+    
+    // Check cache first for instant tab switching
+    if (cache.current[activeCurriculum]) {
+      const cached = cache.current[activeCurriculum];
+      setProblems(cached.problems);
+      setContestLog(cached.contests);
+      setSettings(cached.settings);
+      loadedCurriculum.current = activeCurriculum;
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     fetch(`${API_BASE}/data/${activeCurriculum}`, { headers: getHeaders() })
       .then(handleAuthError)
       .then(res => res.json())
       .then(data => {
-        setProblems(data.problems || initialProblems);
-        setContestLog(data.contests || [{ id: 1, date: new Date().toISOString().split('T')[0], name: 'Initial Rating', before: 1512, after: 1512, penalty: 0, notes: '' }]);
+        const probs = data.problems || initialProblems;
+        const conts = data.contests || [{ id: 1, date: new Date().toISOString().split('T')[0], name: 'Initial Rating', before: 1512, after: 1512, penalty: 0, notes: '' }];
         
         let loadedSettings = data.settings || { isPaused: false, pauseStartDate: null, totalPauseDays: 0, currentRating: 1512, goalRating: 1800 };
         try {
@@ -91,22 +109,43 @@ export const TrackerProvider = ({ children }) => {
           console.error('Failed to parse global AI settings', e);
         }
         
+        // Save to cache
+        cache.current[activeCurriculum] = {
+          problems: probs,
+          contests: conts,
+          settings: loadedSettings
+        };
+
+        loadedCurriculum.current = activeCurriculum;
+        setProblems(probs);
+        setContestLog(conts);
         setSettings(loadedSettings);
         setLoading(false);
       })
       .catch(err => {
         console.error('Failed to load local data', err);
         if (err.message !== 'Unauthorized') {
-          setProblems(initialProblems);
-          setContestLog([{ id: 1, date: new Date().toISOString().split('T')[0], name: 'Initial Rating', before: 1512, after: 1512, penalty: 0, notes: '' }]);
-          setSettings({ isPaused: false, pauseStartDate: null, totalPauseDays: 0, currentRating: 1512, goalRating: 1800 });
+          const probs = initialProblems;
+          const conts = [{ id: 1, date: new Date().toISOString().split('T')[0], name: 'Initial Rating', before: 1512, after: 1512, penalty: 0, notes: '' }];
+          const defaultSettings = { isPaused: false, pauseStartDate: null, totalPauseDays: 0, currentRating: 1512, goalRating: 1800 };
+          
+          cache.current[activeCurriculum] = { problems: probs, contests: conts, settings: defaultSettings };
+          loadedCurriculum.current = activeCurriculum;
+          
+          setProblems(probs);
+          setContestLog(conts);
+          setSettings(defaultSettings);
         }
         setLoading(false);
       });
   }, [activeCurriculum, token]);
 
   useEffect(() => {
-    if (loading || !isAuthenticated) return;
+    // Only save if data has been successfully loaded for the CURRENT curriculum
+    if (loading || !isAuthenticated || loadedCurriculum.current !== activeCurriculum) return;
+
+    // Update cache with latest changes before saving
+    cache.current[activeCurriculum] = { problems, contests: contestLog, settings };
 
     try {
       if (settings.aiSettings || settings.aiChatSessions || settings.aiChatHistory) {
