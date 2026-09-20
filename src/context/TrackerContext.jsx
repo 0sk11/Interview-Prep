@@ -113,7 +113,8 @@ export const TrackerProvider = ({ children }) => {
         cache.current[activeCurriculum] = {
           problems: probs,
           contests: conts,
-          settings: loadedSettings
+          settings: loadedSettings,
+          lastUpdated: data.lastUpdated
         };
 
         loadedCurriculum.current = activeCurriculum;
@@ -144,8 +145,9 @@ export const TrackerProvider = ({ children }) => {
     // Only save if data has been successfully loaded for the CURRENT curriculum
     if (loading || !isAuthenticated || loadedCurriculum.current !== activeCurriculum) return;
 
-    // Update cache with latest changes before saving
-    cache.current[activeCurriculum] = { problems, contests: contestLog, settings };
+    // Update cache with latest changes before saving (preserve lastUpdated)
+    const existingCache = cache.current[activeCurriculum] || {};
+    cache.current[activeCurriculum] = { ...existingCache, problems, contests: contestLog, settings };
 
     try {
       if (settings.aiSettings || settings.aiChatSessions || settings.aiChatHistory) {
@@ -163,9 +165,26 @@ export const TrackerProvider = ({ children }) => {
     fetch(`${API_BASE}/data/${activeCurriculum}`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ problems, contests: contestLog, settings })
+      body: JSON.stringify({ 
+        problems, 
+        contests: contestLog, 
+        settings, 
+        lastUpdated: cache.current[activeCurriculum]?.lastUpdated 
+      })
     })
-    .then(handleAuthError)
+    .then(async res => {
+      if (res.status === 409) {
+        alert('Conflict detected: Your progress was updated on another device or tab. The page will reload to fetch the latest data to prevent overwriting it.');
+        window.location.reload();
+        return;
+      }
+      
+      handleAuthError(res);
+      const data = await res.json();
+      if (data.lastUpdated && cache.current[activeCurriculum]) {
+        cache.current[activeCurriculum].lastUpdated = data.lastUpdated;
+      }
+    })
     .catch(err => console.error('Failed to save data', err));
   }, [problems, contestLog, settings, loading, activeCurriculum, token]);
 

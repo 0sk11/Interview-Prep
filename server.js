@@ -130,7 +130,8 @@ app.get('/api/data/:curriculum', authMiddleware, async (req, res) => {
     res.json({
       problems: data.problems,
       contests: data.contests,
-      settings: data.settings
+      settings: data.settings,
+      lastUpdated: data.updatedAt
     });
   } catch (error) {
     console.error('Error reading data:', error);
@@ -143,7 +144,12 @@ app.get('/api/data', authMiddleware, async (req, res) => {
   try {
     const data = await TrackerData.findOne({ userId: req.user.userId, curriculum: 'dsa' });
     if (!data) return res.json({ problems: null, contests: null, settings: null });
-    res.json(data);
+    res.json({
+      problems: data.problems,
+      contests: data.contests,
+      settings: data.settings,
+      lastUpdated: data.updatedAt
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to read data' });
   }
@@ -152,20 +158,26 @@ app.get('/api/data', authMiddleware, async (req, res) => {
 app.post('/api/data/:curriculum', authMiddleware, async (req, res) => {
   try {
     const curriculum = getSafeCurriculum(req.params.curriculum);
-    const { problems, contests, settings } = req.body;
+    const { problems, contests, settings, lastUpdated } = req.body;
+    
+    // Check for conflicts
+    const existing = await TrackerData.findOne({ userId: req.user.userId, curriculum });
+    if (existing && existing.updatedAt && lastUpdated && new Date(lastUpdated) < existing.updatedAt) {
+      return res.status(409).json({ error: 'Conflict: Data modified on another device' });
+    }
     
     const update = {};
     if (problems !== undefined) update.problems = problems;
     if (contests !== undefined) update.contests = contests;
     if (settings !== undefined) update.settings = settings;
 
-    await TrackerData.findOneAndUpdate(
+    const updated = await TrackerData.findOneAndUpdate(
       { userId: req.user.userId, curriculum },
       { $set: update },
       { upsert: true, new: true }
     );
     
-    res.json({ success: true });
+    res.json({ success: true, lastUpdated: updated.updatedAt });
   } catch (error) {
     console.error('Error saving data:', error);
     res.status(500).json({ error: 'Failed to save data' });
@@ -175,18 +187,25 @@ app.post('/api/data/:curriculum', authMiddleware, async (req, res) => {
 // Fallback POST
 app.post('/api/data', authMiddleware, async (req, res) => {
   try {
-    const { problems, contests, settings } = req.body;
+    const { problems, contests, settings, lastUpdated } = req.body;
+    
+    // Check for conflicts
+    const existing = await TrackerData.findOne({ userId: req.user.userId, curriculum: 'dsa' });
+    if (existing && existing.updatedAt && lastUpdated && new Date(lastUpdated) < existing.updatedAt) {
+      return res.status(409).json({ error: 'Conflict: Data modified on another device' });
+    }
+
     const update = {};
     if (problems !== undefined) update.problems = problems;
     if (contests !== undefined) update.contests = contests;
     if (settings !== undefined) update.settings = settings;
 
-    await TrackerData.findOneAndUpdate(
+    const updated = await TrackerData.findOneAndUpdate(
       { userId: req.user.userId, curriculum: 'dsa' },
       { $set: update },
       { upsert: true, new: true }
     );
-    res.json({ success: true });
+    res.json({ success: true, lastUpdated: updated.updatedAt });
   } catch (error) {
     res.status(500).json({ error: 'Failed to save data' });
   }
