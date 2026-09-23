@@ -5,7 +5,7 @@ import { useTracker } from '../context/TrackerContext';
 import logo from '../assets/logo.jpg';
 
 export default function Sidebar() {
-  const { activeCurriculum, switchCurriculum, settings, setSettings, togglePause, resetData, isMobileMenuOpen, setIsMobileMenuOpen } = useTracker();
+  const { activeCurriculum, switchCurriculum, settings, setSettings, togglePause, resetData, isMobileMenuOpen, setIsMobileMenuOpen, exportData, importData } = useTracker();
 
   return (
     <aside className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`} style={{ padding: '1.5rem 0' }}>
@@ -92,6 +92,33 @@ export default function Sidebar() {
           >
             Reset Data
           </button>
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <button 
+              className="btn btn-outline" 
+              style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }}
+              onClick={exportData}
+              title="Download your progress as a backup file"
+            >
+              Export
+            </button>
+            <label className="btn btn-outline" style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem', cursor: 'pointer', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Restore your progress from a backup file">
+              Import
+              <input 
+                type="file" 
+                accept=".json" 
+                style={{ display: 'none' }} 
+                onChange={(e) => {
+                  if (e.target.files.length > 0) {
+                    if(window.confirm('Are you sure you want to completely overwrite your current progress with this backup file?')) {
+                      importData(e.target.files[0]).catch(err => alert(err.message));
+                    }
+                  }
+                  e.target.value = null; // reset input
+                }} 
+              />
+            </label>
+          </div>
         </div>
       </div>
     </aside>

@@ -305,14 +305,72 @@ export const TrackerProvider = ({ children }) => {
 
   const resetData = () => {
     if(window.confirm(`Are you sure you want to reset all progress for ${activeCurriculum.toUpperCase()}?`)) {
-      fetch(`/api/data/${activeCurriculum}`, {
+      fetch(`${API_BASE}/data/${activeCurriculum}`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ problems: null, contests: null, settings: null })
+        body: JSON.stringify({ problems: null, contests: null, settings: null, lastUpdated: cache.current[activeCurriculum]?.lastUpdated })
       })
       .then(handleAuthError)
       .then(() => window.location.reload());
     }
+  };
+
+  const exportData = () => {
+    const data = {
+      curriculum: activeCurriculum,
+      problems,
+      contests: contestLog,
+      settings,
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeCurriculum}_tracker_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.curriculum !== activeCurriculum) {
+            reject(new Error(`File curriculum (${parsed.curriculum}) does not match active curriculum (${activeCurriculum})`));
+            return;
+          }
+          if (!parsed.problems) {
+            reject(new Error('Invalid backup file: Missing problems data'));
+            return;
+          }
+          
+          fetch(`${API_BASE}/data/${activeCurriculum}`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ 
+              problems: parsed.problems, 
+              contests: parsed.contests || [], 
+              settings: parsed.settings || {}, 
+              lastUpdated: cache.current[activeCurriculum]?.lastUpdated 
+            })
+          })
+          .then(handleAuthError)
+          .then(() => {
+            window.location.reload();
+            resolve();
+          })
+          .catch(reject);
+        } catch (err) {
+          reject(new Error('Failed to parse backup file'));
+        }
+      };
+      reader.readAsText(file);
+    });
   };
 
   const switchCurriculum = (newCurriculum) => {
@@ -334,7 +392,7 @@ export const TrackerProvider = ({ children }) => {
       token, isAuthenticated, login, register, logout, getHeaders,
       activeCurriculum, switchCurriculum, loading, problems, updateProblem, completeRevision, addCustomProblem,
       contestLog, addContest, settings, setSettings, togglePause, getTopicMetrics, resetData, topics: curriculumTopics,
-      isMobileMenuOpen, setIsMobileMenuOpen
+      isMobileMenuOpen, setIsMobileMenuOpen, exportData, importData
     }}>
       {children}
     </TrackerContext.Provider>

@@ -49,6 +49,17 @@ trackerDataSchema.index({ userId: 1, curriculum: 1 }, { unique: true });
 
 const TrackerData = mongoose.model('TrackerData', trackerDataSchema);
 
+const trackerDataHistorySchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  curriculum: { type: String, enum: ['dsa', 'hld', 'lld'], required: true },
+  problems: { type: mongoose.Schema.Types.Mixed },
+  contests: { type: mongoose.Schema.Types.Mixed },
+  settings: { type: mongoose.Schema.Types.Mixed },
+  savedAt: { type: Date, default: Date.now }
+});
+trackerDataHistorySchema.index({ userId: 1, curriculum: 1, savedAt: -1 });
+const TrackerDataHistory = mongoose.model('TrackerDataHistory', trackerDataHistorySchema);
+
 
 // ----------------------------------------------------
 // Authentication Routes
@@ -173,6 +184,33 @@ app.post('/api/data/:curriculum', authMiddleware, async (req, res) => {
     if (contests !== undefined) update.contests = contests;
     if (settings !== undefined) update.settings = settings;
 
+    // Save current state to history before overwriting
+    if (existing) {
+      await TrackerDataHistory.create({
+        userId: existing.userId,
+        curriculum: existing.curriculum,
+        problems: existing.problems,
+        contests: existing.contests,
+        settings: existing.settings
+      });
+      
+      // Keep only last 10 snapshots
+      const historyCount = await TrackerDataHistory.countDocuments({ userId: req.user.userId, curriculum });
+      if (historyCount > 10) {
+        const oldestToKeep = await TrackerDataHistory.find({ userId: req.user.userId, curriculum })
+          .sort({ savedAt: -1 })
+          .skip(9)
+          .limit(1);
+        if (oldestToKeep.length > 0) {
+          await TrackerDataHistory.deleteMany({
+            userId: req.user.userId,
+            curriculum,
+            savedAt: { $lt: oldestToKeep[0].savedAt }
+          });
+        }
+      }
+    }
+
     const updated = await TrackerData.findOneAndUpdate(
       { userId: req.user.userId, curriculum },
       { $set: update },
@@ -203,6 +241,33 @@ app.post('/api/data', authMiddleware, async (req, res) => {
     if (problems !== undefined) update.problems = problems;
     if (contests !== undefined) update.contests = contests;
     if (settings !== undefined) update.settings = settings;
+
+    // Save current state to history before overwriting
+    if (existing) {
+      await TrackerDataHistory.create({
+        userId: existing.userId,
+        curriculum: existing.curriculum,
+        problems: existing.problems,
+        contests: existing.contests,
+        settings: existing.settings
+      });
+      
+      // Keep only last 10 snapshots
+      const historyCount = await TrackerDataHistory.countDocuments({ userId: req.user.userId, curriculum: 'dsa' });
+      if (historyCount > 10) {
+        const oldestToKeep = await TrackerDataHistory.find({ userId: req.user.userId, curriculum: 'dsa' })
+          .sort({ savedAt: -1 })
+          .skip(9)
+          .limit(1);
+        if (oldestToKeep.length > 0) {
+          await TrackerDataHistory.deleteMany({
+            userId: req.user.userId,
+            curriculum: 'dsa',
+            savedAt: { $lt: oldestToKeep[0].savedAt }
+          });
+        }
+      }
+    }
 
     const updated = await TrackerData.findOneAndUpdate(
       { userId: req.user.userId, curriculum: 'dsa' },
