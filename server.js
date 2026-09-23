@@ -162,8 +162,10 @@ app.post('/api/data/:curriculum', authMiddleware, async (req, res) => {
     
     // Check for conflicts
     const existing = await TrackerData.findOne({ userId: req.user.userId, curriculum });
-    if (existing && existing.updatedAt && lastUpdated && new Date(lastUpdated) < existing.updatedAt) {
-      return res.status(409).json({ error: 'Conflict: Data modified on another device' });
+    if (existing && existing.updatedAt) {
+      if (!lastUpdated || new Date(lastUpdated) < existing.updatedAt) {
+        return res.status(409).json({ error: 'Conflict: Data modified on another device or missing timestamp' });
+      }
     }
     
     const update = {};
@@ -191,8 +193,10 @@ app.post('/api/data', authMiddleware, async (req, res) => {
     
     // Check for conflicts
     const existing = await TrackerData.findOne({ userId: req.user.userId, curriculum: 'dsa' });
-    if (existing && existing.updatedAt && lastUpdated && new Date(lastUpdated) < existing.updatedAt) {
-      return res.status(409).json({ error: 'Conflict: Data modified on another device' });
+    if (existing && existing.updatedAt) {
+      if (!lastUpdated || new Date(lastUpdated) < existing.updatedAt) {
+        return res.status(409).json({ error: 'Conflict: Data modified on another device or missing timestamp' });
+      }
     }
 
     const update = {};
