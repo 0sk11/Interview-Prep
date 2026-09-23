@@ -17,6 +17,7 @@ export const TrackerProvider = ({ children }) => {
 
   const cache = useRef({});
   const loadedCurriculum = useRef(null);
+  const saveQueue = useRef(Promise.resolve());
 
 
   const isAuthenticated = !!token;
@@ -162,30 +163,35 @@ export const TrackerProvider = ({ children }) => {
       console.error('Failed to save global AI settings', e);
     }
 
-    fetch(`${API_BASE}/data/${activeCurriculum}`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ 
-        problems, 
-        contests: contestLog, 
-        settings, 
-        lastUpdated: cache.current[activeCurriculum]?.lastUpdated 
-      })
-    })
-    .then(async res => {
-      if (res.status === 409) {
-        alert('Conflict detected: Your progress was updated on another device or tab. The page will reload to fetch the latest data to prevent overwriting it.');
-        window.location.reload();
-        return;
-      }
+    saveQueue.current = saveQueue.current.then(() => {
+      // Must read the latest lastUpdated from cache right before the fetch executes
+      const currentLastUpdated = cache.current[activeCurriculum]?.lastUpdated;
       
-      handleAuthError(res);
-      const data = await res.json();
-      if (data.lastUpdated && cache.current[activeCurriculum]) {
-        cache.current[activeCurriculum].lastUpdated = data.lastUpdated;
-      }
-    })
-    .catch(err => console.error('Failed to save data', err));
+      return fetch(`${API_BASE}/data/${activeCurriculum}`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ 
+          problems, 
+          contests: contestLog, 
+          settings, 
+          lastUpdated: currentLastUpdated 
+        })
+      })
+      .then(async res => {
+        if (res.status === 409) {
+          alert('Conflict detected: Your progress was updated on another device or tab. The page will reload to fetch the latest data to prevent overwriting it.');
+          window.location.reload();
+          return;
+        }
+        
+        handleAuthError(res);
+        const data = await res.json();
+        if (data.lastUpdated && cache.current[activeCurriculum]) {
+          cache.current[activeCurriculum].lastUpdated = data.lastUpdated;
+        }
+      })
+      .catch(err => console.error('Failed to save data', err));
+    });
   }, [problems, contestLog, settings, loading, activeCurriculum, token]);
 
   const togglePause = () => {
